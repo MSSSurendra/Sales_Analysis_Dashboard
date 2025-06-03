@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 
 // Sample data that matches what's displayed in the dashboard
 export const salesDataset = {
@@ -164,13 +165,42 @@ export const salesDataset = {
 };
 
 export const downloadSalesData = () => {
-  const dataStr = JSON.stringify(salesDataset, null, 2);
-  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  // Create a new workbook
+  const workbook = XLSX.utils.book_new();
+
+  // Create worksheets for each data category
   
-  const exportFileDefaultName = `sales-data-${new Date().toISOString().split('T')[0]}.json`;
+  // KPI Data
+  const kpiWorksheet = XLSX.utils.json_to_sheet(salesDataset.kpi);
+  XLSX.utils.book_append_sheet(workbook, kpiWorksheet, 'KPI Metrics');
+
+  // Revenue Data
+  const revenueWorksheet = XLSX.utils.json_to_sheet(salesDataset.revenue);
+  XLSX.utils.book_append_sheet(workbook, revenueWorksheet, 'Revenue Analysis');
+
+  // Sales Overview - Monthly Revenue
+  const monthlyRevenueWorksheet = XLSX.utils.json_to_sheet(salesDataset.salesOverview.monthlyRevenue);
+  XLSX.utils.book_append_sheet(workbook, monthlyRevenueWorksheet, 'Monthly Revenue');
+
+  // Sales Overview - Daily Sales
+  const dailySalesWorksheet = XLSX.utils.json_to_sheet(salesDataset.salesOverview.dailySales);
+  XLSX.utils.book_append_sheet(workbook, dailySalesWorksheet, 'Daily Sales');
+
+  // Categories Data
+  const categoriesWorksheet = XLSX.utils.json_to_sheet(salesDataset.categories);
+  XLSX.utils.book_append_sheet(workbook, categoriesWorksheet, 'Product Categories');
+
+  // Regions Data
+  const regionsWorksheet = XLSX.utils.json_to_sheet(salesDataset.regions);
+  XLSX.utils.book_append_sheet(workbook, regionsWorksheet, 'Regional Sales');
+
+  // Top Products Data
+  const productsWorksheet = XLSX.utils.json_to_sheet(salesDataset.topProducts);
+  XLSX.utils.book_append_sheet(workbook, productsWorksheet, 'Top Products');
+
+  // Generate filename with current date
+  const filename = `sales-data-${new Date().toISOString().split('T')[0]}.xlsx`;
   
-  const linkElement = document.createElement('a');
-  linkElement.setAttribute('href', dataUri);
-  linkElement.setAttribute('download', exportFileDefaultName);
-  linkElement.click();
+  // Write and download the file
+  XLSX.writeFile(workbook, filename);
 };

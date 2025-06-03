@@ -9,6 +9,7 @@ import { CategoryChart } from "@/components/CategoryChart";
 import { RegionalChart } from "@/components/RegionalChart";
 import { TopProducts } from "@/components/TopProducts";
 import { KPICard } from "@/components/KPICard";
+import { downloadSalesData } from "@/utils/downloadData";
 
 const Index = () => {
   const kpiData = [
@@ -46,6 +47,10 @@ const Index = () => {
     }
   ];
 
+  const handleExport = () => {
+    downloadSalesData();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -68,7 +73,7 @@ const Index = () => {
                 <SelectItem value="365">Last year</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2" onClick={handleExport}>
               <Download className="w-4 h-4" />
               Export
             </Button>

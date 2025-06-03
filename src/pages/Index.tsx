@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,7 +16,7 @@ const Index = () => {
       title: "Total Revenue",
       value: "$2,847,392",
       change: "+12.5%",
-      trend: "up",
+      trend: "up" as const,
       icon: DollarSign,
       description: "vs last month"
     },
@@ -25,7 +24,7 @@ const Index = () => {
       title: "Total Orders",
       value: "18,247",
       change: "+8.2%",
-      trend: "up",
+      trend: "up" as const,
       icon: ShoppingCart,
       description: "vs last month"
     },
@@ -33,7 +32,7 @@ const Index = () => {
       title: "Avg Order Value",
       value: "$156.03",
       change: "+3.8%",
-      trend: "up",
+      trend: "up" as const,
       icon: TrendingUp,
       description: "vs last month"
     },
@@ -41,7 +40,7 @@ const Index = () => {
       title: "Active Customers",
       value: "12,847",
       change: "+15.3%",
-      trend: "up",
+      trend: "up" as const,
       icon: Users,
       description: "vs last month"
     }

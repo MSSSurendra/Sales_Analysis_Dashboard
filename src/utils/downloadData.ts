@@ -164,38 +164,38 @@ export const salesDataset = {
   ]
 };
 
-export const downloadSalesData = () => {
+export const downloadSalesData = (data = salesDataset) => {
   // Create a new workbook
   const workbook = XLSX.utils.book_new();
 
   // Create worksheets for each data category
   
   // KPI Data
-  const kpiWorksheet = XLSX.utils.json_to_sheet(salesDataset.kpi);
+  const kpiWorksheet = XLSX.utils.json_to_sheet(data.kpi);
   XLSX.utils.book_append_sheet(workbook, kpiWorksheet, 'KPI Metrics');
 
   // Revenue Data
-  const revenueWorksheet = XLSX.utils.json_to_sheet(salesDataset.revenue);
+  const revenueWorksheet = XLSX.utils.json_to_sheet(data.revenue);
   XLSX.utils.book_append_sheet(workbook, revenueWorksheet, 'Revenue Analysis');
 
   // Sales Overview - Monthly Revenue
-  const monthlyRevenueWorksheet = XLSX.utils.json_to_sheet(salesDataset.salesOverview.monthlyRevenue);
+  const monthlyRevenueWorksheet = XLSX.utils.json_to_sheet(data.salesOverview.monthlyRevenue);
   XLSX.utils.book_append_sheet(workbook, monthlyRevenueWorksheet, 'Monthly Revenue');
 
   // Sales Overview - Daily Sales
-  const dailySalesWorksheet = XLSX.utils.json_to_sheet(salesDataset.salesOverview.dailySales);
+  const dailySalesWorksheet = XLSX.utils.json_to_sheet(data.salesOverview.dailySales);
   XLSX.utils.book_append_sheet(workbook, dailySalesWorksheet, 'Daily Sales');
 
   // Categories Data
-  const categoriesWorksheet = XLSX.utils.json_to_sheet(salesDataset.categories);
+  const categoriesWorksheet = XLSX.utils.json_to_sheet(data.categories);
   XLSX.utils.book_append_sheet(workbook, categoriesWorksheet, 'Product Categories');
 
   // Regions Data
-  const regionsWorksheet = XLSX.utils.json_to_sheet(salesDataset.regions);
+  const regionsWorksheet = XLSX.utils.json_to_sheet(data.regions);
   XLSX.utils.book_append_sheet(workbook, regionsWorksheet, 'Regional Sales');
 
   // Top Products Data
-  const productsWorksheet = XLSX.utils.json_to_sheet(salesDataset.topProducts);
+  const productsWorksheet = XLSX.utils.json_to_sheet(data.topProducts);
   XLSX.utils.book_append_sheet(workbook, productsWorksheet, 'Top Products');
 
   // Generate filename with current date

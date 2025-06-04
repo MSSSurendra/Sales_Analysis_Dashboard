@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,46 +10,15 @@ import { CategoryChart } from "@/components/CategoryChart";
 import { RegionalChart } from "@/components/RegionalChart";
 import { TopProducts } from "@/components/TopProducts";
 import { KPICard } from "@/components/KPICard";
+import { FileUpload } from "@/components/FileUpload";
 import { downloadSalesData } from "@/utils/downloadData";
+import { useSalesData } from "@/contexts/SalesDataContext";
 
 const Index = () => {
-  const kpiData = [
-    {
-      title: "Total Revenue",
-      value: "$2,847,392",
-      change: "+12.5%",
-      trend: "up" as const,
-      icon: DollarSign,
-      description: "vs last month"
-    },
-    {
-      title: "Total Orders",
-      value: "18,247",
-      change: "+8.2%",
-      trend: "up" as const,
-      icon: ShoppingCart,
-      description: "vs last month"
-    },
-    {
-      title: "Avg Order Value",
-      value: "$156.03",
-      change: "+3.8%",
-      trend: "up" as const,
-      icon: TrendingUp,
-      description: "vs last month"
-    },
-    {
-      title: "Active Customers",
-      value: "12,847",
-      change: "+15.3%",
-      trend: "up" as const,
-      icon: Users,
-      description: "vs last month"
-    }
-  ];
+  const { salesData, isUsingUploadedData } = useSalesData();
 
   const handleExport = () => {
-    downloadSalesData();
+    downloadSalesData(salesData);
   };
 
   return (
@@ -58,7 +28,11 @@ const Index = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-4xl font-bold text-slate-900 mb-2">Sales Analytics Dashboard</h1>
-            <p className="text-slate-600 text-lg">Comprehensive insights into your sales performance</p>
+            <p className="text-slate-600 text-lg">
+              {isUsingUploadedData 
+                ? "Analytics generated from your uploaded data" 
+                : "Comprehensive insights into your sales performance"}
+            </p>
           </div>
           <div className="flex gap-3">
             <Select defaultValue="30">
@@ -80,9 +54,12 @@ const Index = () => {
           </div>
         </div>
 
+        {/* File Upload */}
+        <FileUpload />
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {kpiData.map((kpi, index) => (
+          {salesData.kpi.map((kpi: any, index: number) => (
             <KPICard key={index} {...kpi} />
           ))}
         </div>

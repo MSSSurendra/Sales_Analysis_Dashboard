@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, AlertCircle } from "lucide-react";
+import { Upload, FileText, AlertCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { processSalesData } from "@/utils/dataProcessor";
 import { useSalesData } from "@/contexts/SalesDataContext";
@@ -85,12 +85,35 @@ export const FileUpload = () => {
           )}
         </div>
         
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <Info className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-amber-800">
+              <p className="font-semibold mb-2">NOTE: Required Excel/CSV Column Headers</p>
+              <div className="space-y-2">
+                <p><strong>Revenue Data:</strong> "Sales Amount" OR "Amount" OR "Revenue"</p>
+                <p><strong>Date Info:</strong> "Date" OR "Order Date"</p>
+                <p><strong>Product Info:</strong> "Product" OR "Product Name" OR "Item"</p>
+                <p><strong>Category:</strong> "Category" OR "Product Category"</p>
+                <p><strong>Customer:</strong> "Customer" OR "Customer Name"</p>
+                <p><strong>Location:</strong> "Region" OR "Country" OR "State"</p>
+              </div>
+              <p className="mt-2 text-xs italic">
+                Column names are case-insensitive. At minimum, include sales amount data for analysis.
+              </p>
+            </div>
+          </div>
+        </div>
+        
         <div className="mt-4 p-4 bg-blue-50 rounded-lg">
           <div className="flex items-start gap-2">
             <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
             <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Expected file format:</p>
-              <p>Your file should contain columns like: Date, Product, Category, Sales Amount, Customer, Region, etc.</p>
+              <p className="font-medium mb-1">Example file structure:</p>
+              <p className="font-mono text-xs bg-white p-2 rounded border">
+                Date, Product, Category, Sales Amount, Customer, Region<br/>
+                2024-01-15, iPhone 15, Electronics, 999, John Doe, North America
+              </p>
             </div>
           </div>
         </div>

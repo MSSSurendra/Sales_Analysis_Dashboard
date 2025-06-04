@@ -1,250 +1,183 @@
 
-import * as XLSX from 'xlsx';
+import { DollarSign, TrendingUp, ShoppingCart, Users } from 'lucide-react';
 
-interface RawSalesRecord {
-  date?: string;
-  product?: string;
-  category?: string;
-  sales?: number;
-  amount?: number;
-  customer?: string;
-  region?: string;
-  units?: number;
-  price?: number;
-  [key: string]: any;
-}
-
-export const processSalesData = async (file: File): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        let data: RawSalesRecord[] = [];
-        
-        if (file.name.endsWith('.csv')) {
-          const text = e.target?.result as string;
-          const lines = text.split('\n');
-          const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-          
-          data = lines.slice(1).map(line => {
-            const values = line.split(',');
-            const record: RawSalesRecord = {};
-            headers.forEach((header, index) => {
-              record[header] = values[index]?.trim();
-            });
-            return record;
-          }).filter(record => Object.values(record).some(val => val));
-        } else {
-          const workbook = XLSX.read(e.target?.result, { type: 'binary' });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          data = XLSX.utils.sheet_to_json(firstSheet);
-        }
-        
-        const processedData = transformToAnalyticsFormat(data);
-        resolve(processedData);
-      } catch (error) {
-        reject(error);
-      }
-    };
-    
-    reader.onerror = () => reject(new Error('File reading failed'));
-    
-    if (file.name.endsWith('.csv')) {
-      reader.readAsText(file);
-    } else {
-      reader.readAsBinaryString(file);
-    }
-  });
-};
-
-const transformToAnalyticsFormat = (rawData: RawSalesRecord[]) => {
-  // Clean and normalize the data
-  const cleanData = rawData.map(record => ({
-    date: normalizeDate(record.date || record.Date),
-    product: record.product || record.Product || 'Unknown Product',
-    category: record.category || record.Category || 'Uncategorized',
-    sales: parseFloat(String(record.sales || record.amount || record.Sales || record.Amount || 0)),
-    customer: record.customer || record.Customer || 'Unknown',
-    region: record.region || record.Region || 'Unknown Region',
-    units: parseInt(String(record.units || record.Units || 1)),
-    price: parseFloat(String(record.price || record.Price || 0))
-  })).filter(record => record.sales > 0);
-
-  // Generate analytics from the clean data
-  const totalRevenue = cleanData.reduce((sum, record) => sum + record.sales, 0);
-  const totalOrders = cleanData.length;
-  const avgOrderValue = totalRevenue / totalOrders;
-  const uniqueCustomers = new Set(cleanData.map(r => r.customer)).size;
-
-  // Generate KPI data
-  const kpi = [
-    {
-      title: "Total Revenue",
-      value: `$${totalRevenue.toLocaleString()}`,
-      change: "+12.5%",
-      trend: "up",
-      description: "from uploaded data"
-    },
-    {
-      title: "Total Orders",
-      value: totalOrders.toLocaleString(),
-      change: "+8.2%",
-      trend: "up",
-      description: "from uploaded data"
-    },
-    {
-      title: "Avg Order Value",
-      value: `$${avgOrderValue.toFixed(2)}`,
-      change: "+3.8%",
-      trend: "up",
-      description: "from uploaded data"
-    },
-    {
-      title: "Active Customers",
-      value: uniqueCustomers.toLocaleString(),
-      change: "+15.3%",
-      trend: "up",
-      description: "from uploaded data"
-    }
-  ];
-
-  // Generate monthly revenue data
-  const monthlyData = generateMonthlyData(cleanData);
+export const processSalesData = async (file: File) => {
+  const text = await file.text();
+  const lines = text.split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
   
-  // Generate category data
-  const categoryData = generateCategoryData(cleanData);
-  
-  // Generate regional data
-  const regionalData = generateRegionalData(cleanData);
-  
-  // Generate top products
-  const topProducts = generateTopProducts(cleanData);
+  const data = lines.slice(1)
+    .filter(line => line.trim())
+    .map(line => {
+      const values = line.split(',');
+      const row: any = {};
+      headers.forEach((header, index) => {
+        row[header] = values[index]?.trim();
+      });
+      return row;
+    });
 
+  // Calculate KPIs
+  const totalRevenue = data.reduce((sum, row) => {
+    const amount = parseFloat(row['sales amount'] || row['amount'] || row['revenue'] || '0');
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+
+  const totalOrders = data.length;
+  const uniqueCustomers = new Set(data.map(row => row['customer'] || row['customer name'] || '')).size;
+
+  // Generate processed data structure
   return {
-    kpi,
-    salesOverview: {
-      monthlyRevenue: monthlyData,
-      dailySales: generateDailySales(cleanData)
-    },
-    revenue: monthlyData.map((item, index) => ({
-      date: `2024-${String(index + 1).padStart(2, '0')}`,
-      revenue: item.revenue,
-      target: item.revenue * 0.9,
-      orders: item.orders
-    })),
-    categories: categoryData,
-    regions: regionalData,
-    topProducts
+    kpi: [
+      {
+        title: "Total Revenue",
+        value: `$${(totalRevenue / 1000000).toFixed(1)}M`,
+        change: "+12.5%",
+        trend: "up" as const,
+        icon: DollarSign,
+        description: "from uploaded data"
+      },
+      {
+        title: "Orders",
+        value: totalOrders.toLocaleString(),
+        change: "+8.2%",
+        trend: "up" as const,
+        icon: ShoppingCart,
+        description: "total transactions"
+      },
+      {
+        title: "Customers",
+        value: uniqueCustomers.toLocaleString(),
+        change: "+15.3%",
+        trend: "up" as const,
+        icon: Users,
+        description: "unique customers"
+      },
+      {
+        title: "Avg Order",
+        value: `$${(totalRevenue / totalOrders).toFixed(0)}`,
+        change: "+2.4%",
+        trend: "up" as const,
+        icon: TrendingUp,
+        description: "per transaction"
+      }
+    ],
+    revenue: generateRevenueData(data),
+    salesOverview: generateSalesOverview(data),
+    categories: generateCategoryData(data),
+    regions: generateRegionData(data),
+    products: generateProductData(data)
   };
 };
 
-const normalizeDate = (dateStr: any): Date => {
-  if (!dateStr) return new Date();
-  const date = new Date(dateStr);
-  return isNaN(date.getTime()) ? new Date() : date;
-};
-
-const generateMonthlyData = (data: any[]) => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  return months.map((month, index) => {
-    const monthData = data.filter(record => {
-      const date = new Date(record.date);
-      return date.getMonth() === index;
-    });
+// Helper functions to generate chart data
+const generateRevenueData = (data: any[]) => {
+  const monthlyData: { [key: string]: number } = {};
+  
+  data.forEach(row => {
+    const date = new Date(row['date'] || row['order date'] || Date.now());
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const amount = parseFloat(row['sales amount'] || row['amount'] || row['revenue'] || '0');
     
-    const revenue = monthData.reduce((sum, record) => sum + record.sales, 0);
-    const orders = monthData.length;
-    
-    return {
-      month,
-      revenue: revenue || Math.random() * 200000 + 300000,
-      orders: orders || Math.floor(Math.random() * 500) + 1000,
-      avgOrder: revenue / orders || 300
-    };
+    if (!isNaN(amount)) {
+      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + amount;
+    }
   });
+
+  return Object.entries(monthlyData)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6)
+    .map(([date, revenue]) => ({
+      date,
+      revenue,
+      target: revenue * 0.9,
+      orders: Math.floor(revenue / 300)
+    }));
 };
 
-const generateDailySales = (data: any[]) => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return days.map(day => ({
-    day,
-    sales: Math.random() * 25000 + 40000
+const generateSalesOverview = (data: any[]) => {
+  const monthlyData = generateRevenueData(data);
+  return monthlyData.map((item, index) => ({
+    month: new Date(item.date).toLocaleDateString('en-US', { month: 'short' }),
+    revenue: item.revenue,
+    orders: item.orders,
+    avgOrder: Math.round(item.revenue / item.orders)
   }));
 };
 
 const generateCategoryData = (data: any[]) => {
-  const categoryMap = new Map();
+  const categoryTotals: { [key: string]: number } = {};
   
-  data.forEach(record => {
-    const category = record.category;
-    if (!categoryMap.has(category)) {
-      categoryMap.set(category, { sales: 0, count: 0 });
+  data.forEach(row => {
+    const category = row['category'] || row['product category'] || 'Other';
+    const amount = parseFloat(row['sales amount'] || row['amount'] || row['revenue'] || '0');
+    
+    if (!isNaN(amount)) {
+      categoryTotals[category] = (categoryTotals[category] || 0) + amount;
     }
-    categoryMap.get(category).sales += record.sales;
-    categoryMap.get(category).count += 1;
   });
 
-  const totalSales = Array.from(categoryMap.values()).reduce((sum, cat) => sum + cat.sales, 0);
-  const colors = ["#3b82f6", "#06b6d4", "#8b5cf6", "#10b981", "#f59e0b"];
+  const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
+  const colors = ['#3b82f6', '#06b6d4', '#8b5cf6', '#10b981', '#f59e0b'];
   
-  return Array.from(categoryMap.entries()).map(([name, data], index) => ({
-    name,
-    value: Math.round((data.sales / totalSales) * 100),
-    sales: data.sales,
-    color: colors[index % colors.length]
-  }));
+  return Object.entries(categoryTotals)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 5)
+    .map(([name, sales], index) => ({
+      name,
+      value: Math.round((sales / total) * 100),
+      sales,
+      color: colors[index] || '#64748b'
+    }));
 };
 
-const generateRegionalData = (data: any[]) => {
-  const regionMap = new Map();
+const generateRegionData = (data: any[]) => {
+  const regionTotals: { [key: string]: number } = {};
   
-  data.forEach(record => {
-    const region = record.region;
-    if (!regionMap.has(region)) {
-      regionMap.set(region, { sales: 0, customers: new Set() });
+  data.forEach(row => {
+    const region = row['region'] || row['country'] || row['state'] || 'Other';
+    const amount = parseFloat(row['sales amount'] || row['amount'] || row['revenue'] || '0');
+    
+    if (!isNaN(amount)) {
+      regionTotals[region] = (regionTotals[region] || 0) + amount;
     }
-    regionMap.get(region).sales += record.sales;
-    regionMap.get(region).customers.add(record.customer);
   });
 
-  return Array.from(regionMap.entries()).map(([region, data]) => ({
-    region,
-    sales: data.sales,
-    growth: Math.random() * 20 + 10,
-    customers: data.customers.size
-  }));
+  const total = Object.values(regionTotals).reduce((sum, val) => sum + val, 0);
+  
+  return Object.entries(regionTotals)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 4)
+    .map(([name, sales]) => ({
+      name,
+      value: Math.round((sales / total) * 100),
+      sales
+    }));
 };
 
-const generateTopProducts = (data: any[]) => {
-  const productMap = new Map();
+const generateProductData = (data: any[]) => {
+  const productTotals: { [key: string]: { sales: number, category: string } } = {};
   
-  data.forEach(record => {
-    const product = record.product;
-    if (!productMap.has(product)) {
-      productMap.set(product, {
-        name: product,
-        category: record.category,
-        sales: 0,
-        units: 0
-      });
+  data.forEach(row => {
+    const product = row['product'] || row['product name'] || row['item'];
+    const category = row['category'] || row['product category'] || 'Other';
+    const amount = parseFloat(row['sales amount'] || row['amount'] || row['revenue'] || '0');
+    
+    if (product && !isNaN(amount)) {
+      if (!productTotals[product]) {
+        productTotals[product] = { sales: 0, category };
+      }
+      productTotals[product].sales += amount;
     }
-    const productData = productMap.get(product);
-    productData.sales += record.sales;
-    productData.units += record.units;
   });
-
-  return Array.from(productMap.values())
-    .sort((a, b) => b.sales - a.sales)
-    .slice(0, 8)
-    .map((product, index) => ({
-      id: index + 1,
-      name: product.name,
-      category: product.category,
-      sales: product.sales,
-      units: product.units,
-      growth: Math.random() * 30 - 5,
-      rating: 4.0 + Math.random() * 1,
-      trend: Math.random() > 0.2 ? "up" : "down"
+  
+  return Object.entries(productTotals)
+    .sort(([,a], [,b]) => b.sales - a.sales)
+    .slice(0, 5)
+    .map(([name, data]) => ({
+      name,
+      sales: data.sales,
+      growth: Math.random() * 20 + 5, // Random growth for demo
+      category: data.category
     }));
 };
